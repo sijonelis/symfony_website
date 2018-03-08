@@ -1,0 +1,51 @@
+@font-face {
+    font-family: source-han-sans-simplified-c, sans-serif;
+    font-style: normal;
+    font-weight: 300;
+}
+#body {
+    background: url('http://oqi0g5mfs.bkt.clouddn.com/landing_background-min.png') no-repeat left center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+#text_box {
+    width: 30vw;
+    height: 40vh;
+    position:absolute;
+    bottom: 5%;
+    right: 5%;
+    background-color: #ffffff;
+    overflow-y: auto;
+    padding: 10px;
+}
+p, h1{
+    font-family: source-han-sans-simplified-c, sans-serif;
+    font-style: normal;
+}
+p {
+    font-size: 1vw;
+    min-font-size: 0.5vw;
+    font-weight: 300;
+}
+h1 {
+    font-size: 2vw;
+    min-font-size: 1vw;
+    font-weight: 500;
+}
+.col-12 {width: 100%;}
+
+@media only screen and (max-width: 900px) {
+    p {
+        font-size:calc(8px + 1.2vw);
+    }
+    h1 {
+        font-size:calc(10px + 2.2vw);
+    }
+    #text_box {
+        width: auto;
+        right: 5%;
+        left: 5%;
+    }
+}

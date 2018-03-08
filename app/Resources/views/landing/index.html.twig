@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% block javascripts %}
+        <script src="https://use.typekit.net/mli8mqj.js"></script>
+        <script>try{Typekit.load({ async: true });}catch(e){}</script>
+        {#<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>#}
+        {#<script src="{{ asset('assets/yipiao/js/jquery.fittext.js') }}"></script>#}
+        {#<script>#}
+            {#jQuery("#header").fitText();#}
+        {#</script>#}
+    {% endblock %}
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Yipiao{% endblock %}</title>
+    {% block stylesheets %}
+        <link href="{{ asset('assets/yipiao/css/landing.css') }}" rel="stylesheet">
+    {% endblock %}
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}"/>
+</head>
+<body id="body">
+{% block body %}
+<div id="text_box" class="col-12">
+    <h1 id="header">
+        一瓢 - 弱水三千，我取一瓢好茶
+    </h1>
+    <p>
+        茶可分绿白青红黄黑。水为茶之母，器为茶之父。
+        一席好茶，需顺着天时，用好茶，好水，好器，和沉稳的心来泡。
+        越来越多的人对于茶知识表现出兴趣，
+        却因“觉得好高深，又不打算特意找个师傅学”，未再进一步。
+        因此就这样一个工具类的APP。
+        首先是将散落各处的茶知识归一，
+        在介绍茶历史、冲泡方法、器皿选择
+        和贮藏方法的同时，
+        用插画示范一桌茶席。
+        在不同的日子打开一瓢，
+        首页会推送当季适宜的茶，
+        还能在茶页面写下自己的心得。
+        即可供茶小白时时翻阅，又以一个轻松的方式，为还不了解的茶的人们提供一个出发点。
+    </p>
+</div>
+
+{% endblock %}
+</body>
+</html>

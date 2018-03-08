@@ -1,0 +1,26 @@
+version: '3.2'
+
+services:
+  yipiao_db:
+    image: mysql
+    environment:
+      MYSQL_DATABASE: yipiao
+      MYSQL_USER: yipiao
+      MYSQL_PASSWORD: yipiao123!
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  yipiao_php:
+    build: ./php
+  yipiao_web:
+    build: ./web
+#    restart: always
+    volumes:
+      - ../:/var/www/html
+      - ./web/logs/nginx:/var/log/nginx
+    depends_on:
+      - yipiao_php
+    ports:
+      - "10001:80"

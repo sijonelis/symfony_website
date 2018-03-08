@@ -1,0 +1,109 @@
+parameters:
+    app.min_tea_refeature_frequency: 5 #sets the number of days that the tea cannot be featured again after being featured before
+    qiniu_ak: 'cqX_F8BI2K6ZctIwvrgYSIHiawgSqSBYmRBU8IuM'
+    qiniu_as: '_iVaQT-n_KXxtct2P-PoCkHtQWrcnuFa7AjK1ExY'
+    qiniu_bucket: 'yipiao'
+    qiniu_domain: 'http://oqi0g5mfs.bkt.clouddn.com'
+
+services:
+    #system/ext-bundles
+    vich.qiniu:
+        class: AppBundle\Services\QiniuUploader
+        arguments: ['@vich_uploader.property_mapping_factory', %qiniu_ak%, %qiniu_as%, %qiniu_bucket%, %qiniu_domain%]
+    token_authenticator:
+        class: AppBundle\Security\JwtTokenAuthenticator
+        arguments: ['@doctrine.orm.entity_manager']
+    random.string:
+            class: AppBundle\Services\RandomString
+    #event listeners
+    tea_create_listener:
+        class: AppBundle\EventListener\OnCreateTeaListener
+        arguments: ["@security.token_storage"]
+        tags:
+            - { name: doctrine.event_listener, event: prePersist }
+    push_notification.create_listener:
+        class: AppBundle\EventListener\OnCreatePushNotification
+        arguments: ['@app.onesignal']
+        tags:
+            - { name: doctrine.event_listener, event: prePersist }
+    kernel.listener.api_version_listener:
+        class: AppBundle\EventListener\ApiVersionListener
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 100 }
+    api_response_listener:
+        class: AppBundle\EventListener\ApiResponseListener
+        arguments: ['@userRepository', '@doctrine.orm.entity_manager']
+        tags:
+            - { name: kernel.event_subscriber }
+    #services
+    app.tea.feature_random_tea:
+        class: AppBundle\Services\TeaFeature\FeatureRandomTea
+        arguments: ['@teaRepository', '@teaFeaturedRepository', '@doctrine.orm.entity_manager', '%app.min_tea_refeature_frequency%']
+    app.user.login:
+        class: AppBundle\Services\User\Login
+        arguments: ['@userRepository', '@fos_user.user_manager', '@doctrine.orm.entity_manager','@vich.qiniu', '@random.string', '@security.encoder_factory', '%admin_email%']
+    app.user.sync:
+        class: AppBundle\Services\User\Sync
+        arguments: ['@noteRepository', '@teaRepository','@teaFavouriteRepository']
+    app.user.weixin:
+        class: AppBundle\Services\User\WeixinApi
+        arguments: [%weixin.application_id%, %weixin.application_secret%, "@doctrine.orm.entity_manager"]
+    app.log.engagement:
+        class: AppBundle\Services\User\Engagement
+        arguments: ['@engagementRepository', '@teaRepository']
+    app.log.exposure:
+        class: AppBundle\Services\User\Exposure
+        arguments: ['@exposureRepository', '@teaRepository']
+    app.note.write:
+        class: AppBundle\Services\Note\WriteNote
+        arguments: ['@doctrine.orm.entity_manager']
+    app.solarterm.setup:
+        class: AppBundle\Services\SolarTermSetup
+        arguments: ['@doctrine.orm.entity_manager']
+    app.usergroup.setup:
+        class: AppBundle\Services\UserGroupSetup
+        arguments: ['@doctrine.orm.entity_manager']
+    app.onesignal:
+        class: AppBundle\Services\OneSignal
+        arguments: [%onesignal.application_id%, %onesignal.api_key%, %onesignal.user_key%]
+    #repositories
+    teaRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\Tea
+    teaFeaturedRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\TeaFeatured
+    teaFavouriteRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\TeaFavourite
+    noteRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\Note
+    userRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\User
+    engagementRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\Log\Engagement
+    exposureRepository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ["@doctrine.orm.entity_manager", getRepository]
+        arguments:
+            - AppBundle\Entity\Log\Exposure
+    pushNotificationRepository:
+            class: Doctrine\ORM\EntityRepository
+            factory: ["@doctrine.orm.entity_manager", getRepository]
+            arguments:
+                - AppBundle\Entity\Communication\PushNotification

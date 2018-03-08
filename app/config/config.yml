@@ -1,0 +1,259 @@
+imports:
+    - { resource: parameters.yml }
+    - { resource: security.yml }
+    - { resource: services.yml }
+    - { resource: "@AppBundle/Resources/config/services.yml" }
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# http://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    locale: en
+    app.tea_image_base_path: 'http://oqi0g5mfs.bkt.clouddn.com/tea/'
+    app.user_image_base_path: /images/user
+
+framework:
+    #esi:             ~
+    translator:      { fallbacks: ["%locale%"] }
+    secret:          "%secret%"
+    router:
+        resource: "%kernel.root_dir%/config/routing.yml"
+        strict_requirements: ~
+    form:            ~
+    csrf_protection: ~
+    validation:      { enable_annotations: true }
+    #serializer:      { enable_annotations: true }
+    templating:
+        engines: ['twig']
+    default_locale:  "%locale%"
+    trusted_hosts:   ~
+    trusted_proxies: ~
+    session:
+        # http://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+        handler_id:  session.handler.native_file
+        save_path:   "%kernel.root_dir%/../var/sessions/%kernel.environment%"
+    fragments:       ~
+    http_method_override: true
+    assets: ~
+    serializer:
+        enabled: true
+
+# Twig Configuration
+twig:
+    debug:            "%kernel.debug%"
+    strict_variables: "%kernel.debug%"
+
+# Doctrine Configuration
+doctrine:
+    dbal:
+        driver:   pdo_mysql
+        host:     "%database_host%"
+        port:     "%database_port%"
+        dbname:   "%database_name%"
+        user:     "%database_user%"
+        password: "%database_password%"
+        charset:  UTF8
+    orm:
+        auto_generate_proxy_classes: "%kernel.debug%"
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        auto_mapping: true
+        dql:
+            numeric_functions:
+                int: AppBundle\Query\CastAsInteger
+                rand: DoctrineExtensions\Query\Mysql\Rand
+
+# Swiftmailer Configuration
+swiftmailer:
+    transport: "%mailer_transport%"
+    host:      "%mailer_host%"
+    username:  "%mailer_user%"
+    password:  "%mailer_password%"
+    spool:     { type: memory }
+
+#Sensio Framework Extra configuration
+sensio_framework_extra:
+    request: { converters: true }
+
+#FOSUserBondle Configuration
+fos_user:
+    db_driver: orm # other valid values are 'mongodb', 'couchdb' and 'propel'
+    firewall_name: main
+    user_class: AppBundle\Entity\User
+    from_email:
+        address:        admin@yipiao.com
+        sender_name:    Admin
+
+#VichUploader config
+vich_uploader:
+    db_driver: orm
+    storage: "@vich.qiniu"
+    mappings:
+        tea_image:
+            uri_prefix:         %app.tea_image_base_path%
+            upload_destination: qiniu_filesystem
+            namer:              vich_uploader.namer_uniqid
+#            upload_destination: %kernel.root_dir%/../web%app.tea_image_base_path%
+        avatar:
+            uri_prefix:         %app.user_image_base_path%
+            upload_destination: qiniu_filesystem
+#            upload_destination: %kernel.root_dir%/../web%app.user_image_base_path%
+
+# Nelmio CORS Configuration
+nelmio_cors:
+    defaults:
+        allow_credentials: false
+        allow_origin: ['*']
+        allow_headers: ['*']
+        allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+        max_age: 3600
+        hosts: []
+        origin_regex: false
+
+#Nelmio API Doc configuration
+nelmio_api_doc: ~
+
+#command scheduller config
+jmose_command_scheduler:
+    log_path: %kernel.logs_dir%
+
+# FOSRest Configuration
+fos_rest:
+    body_listener: true
+    body_converter:
+        enabled: true
+    format_listener:
+        rules:
+            - { path: '^/api', priorities: ['json'], fallback_format: json, prefer_extension: false }
+            - { path: '^/api/tea', priorities: ['json'], fallback_format: json, prefer_extension: false }
+            - { path: '^/admin', stop: true }  #easyAdminBundle integration
+            - { path: '^/', stop: true }  #overriding the rest of the url's
+    param_fetcher_listener: true
+    view:
+        view_response_listener: 'force'
+        mime_types:
+            json: ['application/json', 'application/json;version=1', 'application/json;version=1.1']
+        formats:
+            json: true
+        empty_content: 204
+
+#ivory editor config
+ivory_ck_editor:
+    default_config: default
+    base_path: 'ckeditor'
+    js_path: 'ckeditor/ckeditor.js'
+    filebrowsers:
+        - ImageBrowse
+    configs:
+        default:
+            extraPlugins: "uploadimage,image2"
+            toolbar: [ ["Image", "Format", "Bold"] ]
+            imageUploadUrl: 'upload-image'
+            uploadUrl: 'upload-image'
+
+#EasyAdmin config
+#https://github.com/javiereguiluz/EasyAdminBundle/issues/238 customization
+easy_admin:
+    site_name: 'Yipiao'
+    design:
+      menu:
+        - { entity: Tea, label: 'All Teas' }
+        - { entity: Tea, label: 'Create Tea', params: { action: 'new' } }
+        - Note
+        - label: 'Communication'
+          children:
+          - UserGroup
+          - PushNotification
+        - label: 'Supporting data'
+          children:
+          - TeaType
+          - User
+          - { entity: User, label: 'Create User', params: { action: 'new' } }
+          - { label: 'Crons', route: 'jmose_command_scheduler_list' }
+        - { label: 'Tea Suggestions', entity: TeaSuggest }
+        - { label: 'Logout', route: 'fos_user_security_logout' }
+    entities:
+      User:
+        class: AppBundle\Entity\User
+        form:
+            fields:
+                - username
+                - email
+                - enabled
+                - lastLogin
+                # if administrators are allowed to edit users' passwords and roles, add this:
+                - { property: 'plainPassword', type: 'text', type_options: { required: false } }
+                - { property: 'roles', type: 'choice', type_options: { multiple: true, choices: { 'ROLE_USER': 'ROLE_USER', 'ROLE_ADMIN': 'ROLE_ADMIN' } } }
+      Tea:
+        class: AppBundle\Entity\Tea
+        controller: AppBundle\Controller\Admin\TeaController
+        list:
+            title: "All teas"
+            fields: [name, teaType, published, {property: notes, type: array}, { property: coverImage, type: image, base_path: %app.tea_image_base_path% }]
+        form:
+            fields:
+                - { type: 'group', css_class: 'col-sm-4', label: 'Tea name' }
+                - name
+                - teaType
+                - { property: solarTermFrom, label: '从节气'}
+                - { property: solarTermTo, label: '到节气' }
+                - { type: 'section', help: 'Only published teas will be visible on the app!' }
+                - published
+                - { type: 'group', css_class: 'col-sm-3', label: 'Cover image' }
+                - { property: coverImageFile, type: vich_image }
+                - { type: 'group', css_class: 'new-row', label: 'Tea Content' }
+                - { property: title, label: 'Title', type: 'text' }
+                - { property: history, type: ckeditor }
+                - { property: waterTitle, label: 'Water Section Title', type: 'text' }
+                - { property: water, type: ckeditor }
+                - { property: storageTitle, label: 'Storage Section Title', type: 'text' }
+                - { property: storage, type: ckeditor }
+      TeaType:
+        class: AppBundle\Entity\TeaType
+        form:
+            fields:
+                - name
+                - description
+                - teas
+      Note:
+        class: AppBundle\Entity\Note
+        list:
+            title: "Notes"
+            fields: [tea, {property: teaImage, type: raw}, user, createdAt, viewed]
+        form:
+            fields:
+                - user
+                - tea
+                - note
+                - createdAt
+                - updatedAt
+                - viewed
+      UserGroup:
+        class: AppBundle\Entity\Communication\UserGroup
+        list:
+            title: "User Groups"
+            fields: [title, enabled, {property: pushNotificationSendFrequencyDays, type: raw, label: "repeatFrequency(days)"}]
+        form:
+            fields:
+                  - title
+                  - enabled
+                  - pushNotificationSendFrequencyDays
+                  - ruleDescription
+
+      PushNotification:
+        class: AppBundle\Entity\Communication\PushNotification
+        list:
+            title: "Push Notifications"
+            fields: [title, text, userSegment, url, sendAt sentAt, isPeriodic, sendToIos, sendToAndroid]
+        form:
+            fields: [title, text, userSegment, {property: url, help: 'supported links are: yipiao://tea/{id}, yipiao://today'}, sendAt, sentAt, isPeriodic, sendToIos, sendToAndroid, oneSignalResponse]
+
+      TeaSuggest:
+        class: AppBundle\Entity\TeaSuggest
+        list:
+          title: "Tea Suggestions"
+          fields: [suggestion, adminNote, timestamp, isOpen ]
+        form:
+          fields:
+            - { property: suggestion, readonly: true }
+            - { property: adminNote, type: ckeditor }
+            - { property: timestamp, readonly: true }
+            - isOpen

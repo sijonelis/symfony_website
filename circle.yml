@@ -1,0 +1,16 @@
+machine:
+  pre:
+    - sudo apt-get update; USE_PRECOMPILE=true sudo -E circleci-install php 7.1.0
+
+  php:
+    version: 7.1.0
+
+dependencies:
+  override:
+    - exit 0
+  pre:
+    - cp $HOME/$CIRCLE_PROJECT_REPONAME/app/config/parameters.yml.circle.dist $HOME/$CIRCLE_PROJECT_REPONAME/app/config/parameters.yml
+
+test:
+  override:
+    - php --version
